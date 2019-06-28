@@ -1,10 +1,14 @@
-.checkbox-tree {
+.geo-targets {
+
+  & li {
+    list-style: none;
+  }
 
   &__branch {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto 1fr;
-    color: $primary;
+    // display: grid;
+    // grid-template-columns: auto 1fr;
+    // grid-template-rows: auto 1fr;
+    // color: $primary;
   }
 
   &__branch > i {

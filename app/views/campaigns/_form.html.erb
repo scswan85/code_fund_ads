@@ -64,31 +64,76 @@
     <div class="row" data-controller="select-geo-targets" data-action="cf:select:changed->select-geo-targets#updateProvinceCodeOptions">
       <div class="col-12 mb-3">
         <%= f.label :country_codes, label: "Targeted Countries", class: "form-label", required: true %>
-        <div class="checkbox-tree">
+        <div class="geo-targets"
+          data-selected-targets=""
+          data-controller="geo-targets"
+          data-target="select-geo-targets.countryCodesSelect geo-targets.tree">
           <% Country.all.map(&:subregion).uniq.sort.each do |subregion| %>
-            <div class="checkbox-tree__branch" data-controller="checkbox-tree-branch">
-              <i class="fa fa-caret-right"
-                 data-target="checkbox-tree-branch.toggle"
-                 data-action="click->checkbox-tree-branch#toggleBranch">
-              </i>
+            <div class="geo-targets-subregion">
               <div class="form-check">
                 <%= check_box_tag subregion.downcase,
                   nil,
                   false,
-                  class: 'form-check-input',
-                  data: {
-                    target: 'checkbox-tree-branch.selectAll',
-                    action: 'change->checkbox-tree-branch#toggleSelectAll'
-                  } %>
+                  class: 'form-check-input geo-targets-subregion-checkbox' %>
                 <%= label_tag subregion.downcase, subregion, class: 'form-check-label' %>
               </div>
-              <div class="checkbox-tree__branch-leaves" data-target="checkbox-tree-branch.leaves">
-                <%= f.input :country_codes,
-                  as: :check_boxes,
-                  collection: countries_with_codes_for_subregion(subregion),
-                  input_html: { data: { target: 'checkbox-tree-branch.leaf', action: 'change->checkbox-tree-branch#handleLeafChange' } } %>
-              </div>
+              <ul>
+                <% countries_with_codes_for_subregion(subregion).each do |name, country_code| %>
+                  <li class="geo-targets-country" data-iso-code="<%= country_code %>">
+                    <div class="form-check">
+                      <%= check_box_tag name,
+                        country_code,
+                        false,
+                        class: 'form-check-input geo-targets-country-checkbox' %>
+                      <%= label_tag name, name, class: 'form-check-label' %>
+                    </div>
+                    <ul>
+                      <% Province.where(country_code: country_code).each do |province| %>
+                        <% next unless province.name.present? %>
+                        <li class="geo-targets-province" data-iso-code="<%= province.iso_code %>">
+                          <div class="form-check">
+                            <%= check_box_tag province.name,
+                              province.iso_code,
+                              false,
+                              class: 'form-check-input geo-targets-province-checkbox' %>
+                            <%= label_tag province.name, province.name, class: 'form-check-label' %>
+                          </div>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </li>
+                <% end %>
+              </ul>
             </div>
+
+
+
+
+
+            <%# <div class="checkbox-tree__branch" data-controller="checkbox-tree-branch1"> %>
+            <%#   <i class="fa fa-caret-right open" %>
+            <%#      data-target="checkbox-tree-branch.toggle" %>
+            <%#      data-action="click->checkbox-tree-branch#toggleBranch"> %>
+            <%#   </i> %>
+            <%#   <div class="checkbox-tree__branch-leaves open" data-target="checkbox-tree-branch.leaves"> %>
+            <%#     <1%# f.input :country_codes, %>
+            <%#       as: :check_boxes, %>
+            <%#       collection: countries_with_codes_for_subregion(subregion), %>
+            <%#       input_html: { data: { target: 'checkbox-tree-branch.leaf', action: 'change->checkbox-tree-branch#handleLeafChange' } } %1> %>
+            <%#     <ul> %>
+            <%#       <% countries_with_codes_for_subregion(subregion).each do |name, code| %1> %>
+            <%#         <li> %>
+            <%#           <%= "#{name}: #{code}" %1> %>
+            <%#           <ul> %>
+            <%#             <% Province.where(country_code: code).each do |prov| %1> %>
+            <%#               <li><%= "#{prov.name}: #{prov.iso_code}" %1></li> %>
+            <%#             <% end %1> %>
+            <%#           </ul> %>
+            <%#         </li> %>
+            <%#       <% end %1> %>
+            <%#     </ul> %>
+            <%#   </div> %>
+            <%# </div> %>
           <% end %>
         </div>
       </div>
