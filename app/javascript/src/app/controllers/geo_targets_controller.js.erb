@@ -1,0 +1,127 @@
+import { Controller } from 'stimulus';
+
+export default class extends Controller {
+  static targets = ['tree'];
+
+  connect() {
+    let {selectedCountryCodes, selectedProvinceCodes} = this.element.dataset;
+    this.selectedCountryCodes = (selectedCountryCodes || '').split(',');
+    this.selectedProvinceCodes = (selectedProvinceCodes || '').split(',');
+    this.tree = <%= Province.hierarchical_region_data.to_json.html_safe %>;
+  }
+
+  toggle(event) {
+    let checked = event.target.checked;
+    let name = event.target.name;
+    let {leaf, region, subregion, country, isoCode} = event.target.dataset;
+    let node = this.getNode(leaf, name, region, subregion, country);
+
+    node.checked = checked;
+    this.toggleContainerElement(event);
+    this.updateChildren(event);
+    this.updateAncestors(event);
+
+    if (leaf === 'country' && checked) this.selectCountry(region, subregion, name, isoCode);
+    if (leaf === 'country' && !checked) this.deselectCountry(name, isoCode);
+    if (leaf === 'province' && checked) this.selectProvince(name, isoCode);
+    if (leaf === 'province' && !checked) this.deselectProvince(name, isoCode);
+
+    console.log(this.tree);
+    console.log(leaf, name, region, subregion, country, isoCode);
+    console.log(node);
+    console.log(this.selectedCountryCodes, this.selectedProvinceCodes);
+  }
+
+  toggleContainerElement(event) {
+    const parent = this.getContainer(event.target);
+
+    if (event.target.type === 'checkbox') {
+      if (event.target.checked && !parent.classList.contains('open')) {
+        parent.classList.add('open');
+      }
+    } else {
+      parent.classList.toggle('open');
+    }
+  }
+
+  updateChildren(event) {
+    if (!event.target.parentElement.parentElement.classList.contains('geo-targets__toggle-container')) {
+      return;
+    }
+
+    const childInputs = this.getContainer(event.target)
+      .querySelectorAll('.form-check > .geo-targets__checkbox > input')
+
+    if (childInputs) {
+      const childArray = Array.from(childInputs);
+      childInputs.forEach(i => { i.checked = event.target.checked });
+    }
+  }
+
+  updateAncestors(event) {
+    let parentContainers = [];
+    let ancestor = this.getContainer(event.target);
+    while (ancestor) {
+      parentContainers.push(ancestor);
+      ancestor = ancestor.parentElement.closest('.geo-targets__toggle-container');
+      ancestor = this.getContainer(ancestor.parentElement);
+    }
+    parentContainers.forEach((pc) => {
+      let parentInput = pc.querySelector('.geo-targets__checkbox > input');
+      let childInputs = Array.from(
+        pc.querySelectorAll(':scope > .form-check > .geo-targets__checkbox > input')
+      );
+      if (childInputs.every(i => { return i.checked })) {
+        parentInput.checked = true;
+        parentInput.indeterminate = false;
+      } else if (childInputs.some(i => { return i.checked || i.indeterminate })) {
+        parentInput.checked = false;
+        parentInput.indeterminate = true;
+      } else {
+        parentInput.checked = false;
+        parentInput.indeterminate = false;
+      }
+    });
+  }
+
+  getNode(leaf, name, region, subregion, country) {
+    switch (leaf) {
+      case 'region':
+        return this.tree[name];
+      case 'subregion':
+        return this.tree[region].subregions[name];
+      case 'country':
+        return this.tree[region].subregions[subregion].countries[name];
+      case 'province':
+        return this.tree[region].subregions[subregion].countries[country].provinces[name];
+    }
+    return null;
+  }
+
+  getContainer(element) {
+    return element.closest('.geo-targets__toggle-container');
+  }
+
+  selectCountry(region, subregion, country, isoCode) {
+    if (this.selectedCountryCodes.indexOf(isoCode) === -1)
+      this.selectedCountryCodes.push(isoCode);
+
+    // TODO: country selected; therefore, all provinces are implicitly selected and should be removed from selectedProvinceCodes
+  }
+
+  deselectCountry(region, subregion, country, isoCode) {
+    let index = this.selectedCountryCodes.indexOf(isoCode);
+    if (index > -1) this.selectedCountryCodes.splice(index, 1);
+
+    // TODO: country deselected remove all provinces from selectedProvinceCodes
+  }
+
+  selectProvince(name, isoCode) {
+    if (this.selectedProvinceCodes.indexOf(isoCode) === -1) this.selectedProvinceCodes.push(isoCode);
+  }
+
+  deselectProvince(name, isoCode) {
+    let index = this.selectedProvinceCodes.indexOf(isoCode);
+    if (index > -1) this.selectedProvinceCodes.splice(index, 1);
+  }
+}

@@ -35,4 +35,5 @@ environment.plugins.prepend(
 );
 
 environment.loaders.append('erb', erb);
+environment.loaders.prepend('erb', erb)
 module.exports = environment;

@@ -78,6 +78,29 @@ class Province
         }.uniq == [true]
       end
     end
+
+    def hierarchical_region_data
+      data = HashWithIndifferentAccess.new
+      Province.all.each do |province|
+        next unless province.region.present?
+        next unless province.subregion.present?
+        next unless province.country_name.present?
+        next unless province.country_code.present?
+        next unless province.province_name.present?
+
+        data[province.region] ||= {}
+        data[province.region][:subregions] ||= {}
+        data[province.region][:subregions][province.subregion] ||= {}
+        data[province.region][:subregions][province.subregion][:countries] ||= {}
+        data[province.region][:subregions][province.subregion][:countries][province.country_name] ||= {
+          emoji_flag: province.emoji_flag,
+          iso_code: province.country_code,
+        }
+        data[province.region][:subregions][province.subregion][:countries][province.country_name][:provinces] ||= {}
+        data[province.region][:subregions][province.subregion][:countries][province.country_name][:provinces][province.province_name] = {iso_code: province.iso_code}
+      end
+      data
+    end
   end
 
   def iso_code

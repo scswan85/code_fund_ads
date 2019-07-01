@@ -4,6 +4,29 @@
     list-style: none;
   }
 
+  &__checkbox {
+    display: flex;
+    align-items: baseline;
+  }
+
+  &__toggle-container {
+    max-height: 24px;
+    overflow: hidden;
+    transition: all .2s;
+
+    & i {
+      margin-right: 5px;
+    }
+
+    &.open {
+      max-height: 100%;
+
+      & > div > i {
+        transform: rotate(90deg);
+      }
+    }
+  }
+
   &__branch {
     // display: grid;
     // grid-template-columns: auto 1fr;
