@@ -1,7 +1,7 @@
 import { Controller } from 'stimulus';
 
 export default class extends Controller {
-  static targets = ['tree'];
+  static targets = ['tree','countryCodes', 'provinceCodes'];
 
   connect() {
     let {selectedCountryCodes, selectedProvinceCodes} = this.element.dataset;
@@ -14,22 +14,22 @@ export default class extends Controller {
     let checked = event.target.checked;
     let name = event.target.name;
     let {leaf, region, subregion, country, isoCode} = event.target.dataset;
-    let node = this.getNode(leaf, name, region, subregion, country);
 
-    <%# node.checked = checked; %>
     this.toggleContainerElement(event);
     this.updateChildren(event);
     this.updateAncestors(event);
 
+    if (leaf === 'region' && checked) this.selectRegion(name);
+    if (leaf === 'region' && !checked) this.deselectRegion(name);
+    if (leaf === 'subregion' && checked) this.selectSubregion(name, region);
+    if (leaf === 'subregion' && !checked) this.deselectSubregion(name, region);
     if (leaf === 'country' && checked) this.selectCountry(name, isoCode, region, subregion);
     if (leaf === 'country' && !checked) this.deselectCountry(name, isoCode, region, subregion);
     if (leaf === 'province' && checked) this.selectProvince(name, isoCode, region, subregion, country);
     if (leaf === 'province' && !checked) this.deselectProvince(name, isoCode, region, subregion, country);
 
-    console.log(this.tree);
-    console.log(leaf, name, region, subregion, country, isoCode);
-    console.log(node);
-    console.log(this.selectedCountryCodes, this.selectedProvinceCodes);
+    this.countryCodesTarget.value = this.selectedCountryCodes;
+    this.provinceCodesTarget.value = this.selectedProvinceCodes;
   }
 
   toggleContainerElement(event) {
@@ -45,31 +45,39 @@ export default class extends Controller {
   }
 
   updateChildren(event) {
-    if (!event.target.parentElement.parentElement.classList.contains('geo-targets__toggle-container')) {
+    const element = event.target
+
+    if (element.dataset.leaf === 'province') {
       return;
     }
 
-    const childInputs = this.getContainer(event.target)
-      .querySelectorAll('.form-check > .geo-targets__checkbox > input')
+    const childInputs = this.getContainer(element)
+      .querySelectorAll(`[data-${element.dataset.leaf}="${element.name}"]`);
 
     if (childInputs) {
       const childArray = Array.from(childInputs);
-      childInputs.forEach(i => { i.checked = event.target.checked });
+      childInputs.forEach(i => {
+        i.checked = event.target.checked;
+        i.indeterminate = false;
+      });
     }
   }
 
   updateAncestors(event) {
     let parentContainers = [];
     let ancestor = this.getContainer(event.target);
+
     while (ancestor) {
       parentContainers.push(ancestor);
       ancestor = this.getContainer(ancestor.parentElement);
     }
+
     parentContainers.forEach((pc) => {
       let parentInput = pc.querySelector('.geo-targets__checkbox > input');
       let childInputs = Array.from(
         pc.querySelectorAll(':scope > .form-check > .geo-targets__checkbox > input')
       );
+
       if (childInputs.every(i => { return i.checked })) {
         parentInput.checked = true;
         parentInput.indeterminate = false;
@@ -83,37 +91,47 @@ export default class extends Controller {
     });
   }
 
-  getNode(leaf, name, region, subregion, country) {
-    switch (leaf) {
-      case 'region':
-        return this.tree[name];
-      case 'subregion':
-        return this.tree[region].subregions[name];
-      case 'country':
-        return this.tree[region].subregions[subregion].countries[name];
-      case 'province':
-        return this.tree[region].subregions[subregion].countries[country].provinces[name];
-    }
-    return null;
-  }
-
   getContainer(element) {
     return element.closest('.geo-targets__toggle-container');
   }
 
-  selectTreeProvinces(provinces) {
-    Object.keys(provinces).forEach(province => {
-      const index = this.selectedProvinceCodes.indexOf(provinces[province].iso_code);
-      if (index === -1) this.selectedProvinceCodes.push(provinces[province].iso_code);
-      provinces[province].checked = true;
+  selectRegion(name) {
+    const region = this.tree[name];
+    region.checked = true;
+
+    const subregions = Object.keys(region.subregions);
+    subregions.forEach(subregion => {
+      this.selectSubregion(subregion, name);
     });
   }
 
-  deselectTreeProvinces(provinces) {
-    Object.keys(provinces).forEach(province => {
-      const index = this.selectedProvinceCodes.indexOf(provinces[province].iso_code);
-      if (index > -1) this.selectedProvinceCodes.splice(index, 1);
-      provinces[province].checked = false;
+  deselectRegion(name) {
+    const region = this.tree[name];
+    region.checked = false;
+
+    const subregions = Object.keys(region.subregions);
+    subregions.forEach(subregion => {
+      this.deselectSubregion(subregion, name);
+    });
+  }
+
+  selectSubregion(name, region) {
+    const subregion = this.tree[region].subregions[name];
+    subregion.checked = true;
+
+    const countries = Object.keys(subregion.countries);
+    countries.forEach(country => {
+      this.selectCountry(country, subregion.countries[country].iso_code, region, name);
+    });
+  }
+
+  deselectSubregion(name, region) {
+    const subregion = this.tree[region].subregions[name];
+    subregion.checked = false;
+
+    const countries = Object.keys(subregion.countries);
+    countries.forEach(country => {
+      this.deselectCountry(country, subregion.countries[country].iso_code, region, name);
     });
   }
 
@@ -163,5 +181,21 @@ export default class extends Controller {
         province.checked = false;
       }
     }
+  }
+
+  selectTreeProvinces(provinces) {
+    Object.keys(provinces).forEach(province => {
+      const index = this.selectedProvinceCodes.indexOf(provinces[province].iso_code);
+      if (index === -1) this.selectedProvinceCodes.push(provinces[province].iso_code);
+      provinces[province].checked = true;
+    });
+  }
+
+  deselectTreeProvinces(provinces) {
+    Object.keys(provinces).forEach(province => {
+      const index = this.selectedProvinceCodes.indexOf(provinces[province].iso_code);
+      if (index > -1) this.selectedProvinceCodes.splice(index, 1);
+      provinces[province].checked = false;
+    });
   }
 }

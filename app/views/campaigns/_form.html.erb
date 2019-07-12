@@ -65,6 +65,8 @@
          data-controller="geo-targets"
          data-selected-country-codes="<%= campaign.country_codes.join(",").html_safe %>"
          data-selected-province-codes="<%= campaign.province_codes.join(",").html_safe %>">
+         <%= f.input_field :country_codes, as: 'hidden', data: { target: 'geo-targets.countryCodes' } %>
+         <%= f.input_field :province_codes, as: 'hidden', data: { target: 'geo-targets.provinceCodes' } %>
       <div class="col-12">
         <%= f.label :country_codes, label: "Targeted Countries", class: "form-label", required: true %>
         <% Province.hierarchical_region_data.each do |region_name, region_data| %>
