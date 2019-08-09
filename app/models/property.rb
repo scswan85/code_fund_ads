@@ -188,6 +188,7 @@ class Property < ApplicationRecord
   private
 
   def generate_screenshot
+    return unless ENV["SCREENSHOT_MACHINE_KEY"].present?
     GeneratePropertyScreenshotJob.perform_later(id) if saved_change_to_url?
   end
 

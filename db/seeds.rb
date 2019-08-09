@@ -52,7 +52,7 @@ class Seeder
       organizations = build_organizations
       import_csv :organizations, create_csv(organizations, Rails.root.join("tmp/organizations.csv")), Organization.sequence_name unless organizations.blank?
     }
-    print "verified [#{Organization.count.to_s.rjust(8)}] total users".ljust(48)
+    print "verified [#{Organization.count.to_s.rjust(8)}] total organizations".ljust(48)
     puts benchmark
   end
 
@@ -75,7 +75,7 @@ class Seeder
     attributes = (count..target).map { |i|
       {
         id: i + 1,
-        name: "#{Faker::SiliconValley.company} #{SecureRandom.hex.upcase[0, 6]}",
+        name: "#{Faker::TvShows::SiliconValley.company} #{SecureRandom.hex.upcase[0, 6]}",
         balance_cents: [0, 50000, 250000].sample,
         balance_currency: "USD",
         created_at: 3.days.ago,
@@ -195,15 +195,16 @@ class Seeder
 
   def generate_creatives(advertiser)
     5.times do
-      creative = Creative.create(
-        user: advertiser,
-        organization: advertiser.organization,
-        name: Faker::SiliconValley.company,
-        headline: Faker::SiliconValley.invention,
-        body: Faker::SiliconValley.motto,
+      creative = Creative.create!(
+        user_id: advertiser.id,
+        organization_id: advertiser.organization_id,
+        name: Faker::TvShows::SiliconValley.company,
+        headline: Faker::TvShows::SiliconValley.invention,
+        body: Faker::TvShows::SiliconValley.motto,
+        cta: "Click Here",
       )
       advertiser.images.each do |image|
-        CreativeImage.create creative: creative, image: image
+        CreativeImage.create! creative_id: creative.id, active_storage_attachment_id: image.id
       end
     end
   end
@@ -221,7 +222,7 @@ class Seeder
   def seed_properties
     print "Seeding properties...".ljust(48)
     benchmark = Benchmark.measure {
-      properties = User.publishers.each_with_object([]) { |publisher, memo|
+      User.publishers.each_with_object([]) { |publisher, memo|
         next if publisher.properties.count > 0
         rand(1..2).times.each do
           property = Property.new(
@@ -229,23 +230,19 @@ class Seeder
             user_id: publisher.id,
             property_type: ENUMS::PROPERTY_TYPES.values.sample,
             status: rand(5).zero? ? ENUMS::PROPERTY_STATUSES.values.sample : ENUMS::PROPERTY_STATUSES::ACTIVE,
-            name: "#{Faker::SiliconValley.invention} #{SecureRandom.hex.upcase[0, 6]}",
-            url: Faker::SiliconValley.url,
+            name: "#{Faker::TvShows::SiliconValley.invention} #{SecureRandom.hex.upcase[0, 6]}",
+            url: Faker::TvShows::SiliconValley.url,
             ad_template: ENUMS::AD_TEMPLATES.values.sample,
             ad_theme: ENUMS::AD_THEMES.values.sample,
             language: ENUMS::LANGUAGES::ENGLISH,
             prohibit_fallback_campaigns: false,
             created_at: Time.current,
             updated_at: Time.current,
+            keywords: ENUMS::KEYWORDS.keys.sample(7)
           )
-          attributes = property.attributes.merge(
-            "keywords" => "{#{ENUMS::KEYWORDS.keys.sample(25).join(",")}}",
-            "prohibited_advertiser_ids" => "{}"
-          )
-          memo << attributes.values
+          property.save!
         end
       }
-      import_csv :properties, create_csv(properties, Rails.root.join("tmp/properties.csv")), Property.sequence_name unless properties.blank?
     }
     print "verified [#{Property.count.to_s.rjust(8)}] total properties".ljust(48)
     puts benchmark
@@ -281,11 +278,11 @@ class Seeder
     @encrypted_password ||= User.new(password: "secret").encrypted_password
     first_name = Faker::Name.first_name
     last_name = Faker::Name.last_name
-    email = Faker::Internet.email("#{first_name} #{last_name} #{SecureRandom.hex[0, 8]}", "-")
+    email = Faker::Internet.email(name: "#{first_name} #{last_name} #{SecureRandom.hex[0, 8]}")
     user = User.new(
       first_name: first_name,
       last_name: last_name,
-      company_name: Faker::SiliconValley.company,
+      company_name: Faker::TvShows::SiliconValley.company,
       email: email,
       encrypted_password: @encrypted_password,
       confirmation_token: Devise.friendly_token,

@@ -10,13 +10,13 @@ class CampaignSeeder
     keywords = ENUMS::KEYWORDS.keys.sample(25)
     negative_keywords = ENUMS::KEYWORDS.keys.sample(2) - keywords
 
-    Campaign.create(
-      user: advertiser,
-      organization: advertiser.organization,
-      creative: advertiser.creatives.sample,
+    Campaign.create!(
+      user_id: advertiser.id,
+      organization_id: advertiser.organization_id,
+      creative_id: advertiser.creatives.sample.id,
       status: ENUMS::CAMPAIGN_STATUSES.values.sample,
       name: "#{Faker::Company.name} #{SecureRandom.hex.to_s[0, 6]}",
-      url: Faker::SiliconValley.url,
+      url: Faker::TvShows::SiliconValley.url,
       start_date: start_date,
       end_date: end_date,
       core_hours_only: rand(5).zero?,

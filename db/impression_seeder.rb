@@ -98,7 +98,7 @@ class ImpressionSeeder
       property_id: property.id,
       ad_template: "default",
       ad_theme: "light",
-      ip_address: rand(6).zero? ? Faker::Internet.ip_v6_address : Faker::Internet.public_ip_v4_address,
+      ip_address: Digest::MD5.hexdigest(Faker::Internet.public_ip_v4_address),
       user_agent: Faker::Internet.user_agent,
       country_code: rand(6).zero? ? "US" : Country.all.sample.iso_code,
       displayed_at: displayed_at,
