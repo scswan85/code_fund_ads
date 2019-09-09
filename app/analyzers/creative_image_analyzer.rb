@@ -1,14 +1,20 @@
 class CreativeImageAnalyzer < ActiveStorage::Analyzer::ImageAnalyzer
   def metadata
-    md = super.dup
-    md[:name] = @blob.filename
-    return md unless md[:height].present? && md[:width].present?
+    super.dup.tap do |md|
+      md[:name] = @blob.filename
 
-    md[:format] = "icon" if md[:width].to_i == 20 && md[:height] == 20
-    md[:format] = "icon" if md[:width].to_i == 40 && md[:height] == 40
-    md[:format] = "small" if md[:width].to_i == 200 && md[:height] == 200
-    md[:format] = "large" if md[:width].to_i == 260 && md[:height] == 200
-    md[:format] = "wide" if md[:width].to_i == 512 && md[:height] == 320
-    md
+      if md[:height].present? && md[:width].present?
+        size = "#{md[:width]}x#{md[:height]}"
+        md[:format] = case size
+          when "20x20", "40x40" then "icon"
+          when "200x200" then "small"
+          when "260x200" then "large"
+          when "512x320" then "wide"
+          when "300x40" then @blob.svg? ? "svg/readme+top" : nil
+        end
+      end
+
+      md[:format] ||= "unknown"
+    end
   end
 end

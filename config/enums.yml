@@ -122,11 +122,25 @@ PROPERTY_RESPONSIVE_BEHAVIORS:
   - footer
   - hide
 
+# SEE: app/analyzers/creative_image_analyzer.rb
 IMAGE_FORMATS:
+  # 20x20, 40x40
   - icon
+
+  # 200x200
   - small
+
+  # 260x200
   - large
+
+  # 512x320
   - wide
+
+  # svg + 300x40
+  - svg/readme+top
+
+  # none of the above
+  - unknown
 
 IMAGE_CONTENT_TYPES:
   - image/gif
