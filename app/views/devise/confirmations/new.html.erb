@@ -1,20 +1,37 @@
-<h2>Resend confirmation instructions</h2>
+<!-- ========== MAIN ========== -->
+<main class="content" role="main" class="border-bottom">
+  <div class="container space-top-t space-top-md-4 space-bottom-2">
+      <%= simple_form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { method: :post, class: "js-validate w-md-75 w-lg-50 mx-md-auto" }) do |f| %>
+        <!-- Title -->
+        <div class="mb-7">
+          <h1 class="h3 font-weight-normal mb-0">Resend confirmation instructions</h1>
+          <%= f.error_notification %>
+          <%= f.full_error :confirmation_token %>
+        </div>
+        <!-- End Title -->
 
-<%= simple_form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { method: :post }) do |f| %>
-  <%= f.error_notification %>
-  <%= f.full_error :confirmation_token %>
+        <!-- Form Group -->
+        <div class="js-form-message form-group">
+          <%= f.input :email,
+                      required: true,
+                      autofocus: true,
+                      value: (resource.pending_reconfirmation? ? resource.unconfirmed_email : resource.email),
+                      input_html: { autocomplete: "email" } %>
+        </div>
+        <!-- End Form Group -->
 
-  <div class="form-inputs">
-    <%= f.input :email,
-                required: true,
-                autofocus: true,
-                value: (resource.pending_reconfirmation? ? resource.unconfirmed_email : resource.email),
-                input_html: { autocomplete: "email" } %>
+        <!-- Button -->
+      <div class="row align-items-center mb-5">
+        <div class="col-3 col-sm-4">
+          <%= link_to "Login", new_user_session_path, class: "small link-muted" %>
+        </div>
+        <div class="col-9 col-sm-8 text-right">
+          <button type="submit" class="btn btn-secondary transition-3d-hover">Resend Confirmation Instructions</button>
+        </div>
+      </div>
+      <!-- End Button -->
+    <% end %>
   </div>
-
-  <div class="form-actions">
-    <%= f.button :submit, "Resend confirmation instructions" %>
-  </div>
-<% end %>
-
-<%= render "devise/shared/links" %>
+  <!-- End Login Form -->
+</main>
+<!-- ========== END MAIN ========== -->
